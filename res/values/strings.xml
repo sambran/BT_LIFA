@@ -38,4 +38,28 @@
     <string name="secure_connect">Connect a device</string>
     <string name="insecure_connect">Connect a device - Insecure</string>
     <string name="discoverable">Make discoverable</string>
+    
+    
+    <!--  Main Layout -->
+    <!-- Pin check boxes -->
+    <string name="pin0">Pin 0</string>
+    <string name="pin1">Pin 1</string>
+    <string name="pin2">Pin 2</string>
+    <string name="pin3">Pin 3</string>
+    <string name="pin4">Pin 4</string>
+    <string name="pin5">Pin 5</string>
+    
+    <!--  Inputs -->
+    <string name="frequency_input">Frequency in HZ</string>
+    <string name="samples_input">Amount of samples</string>
+    
+    <!--  Buttons -->
+    <string name="continuous_start">Start</string>
+    <string name="continuous_stop">Stop</string>
+    <string name="finite_start">Start</string>
+    
+    <!--  Texts -->
+    <string name="continuous_tab">Continuous</string>
+    <string name="finite_tab">Finite</string>
+    <string name="last_read_tab">Last Reading</string>
 </resources>

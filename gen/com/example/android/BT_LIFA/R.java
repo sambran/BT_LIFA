@@ -14,14 +14,26 @@ public final class R {
         public static final int app_icon=0x7f020000;
     }
     public static final class id {
+        public static final int buttonConStart=0x7f06000f;
+        public static final int buttonConStop=0x7f060010;
+        public static final int buttonFinStart=0x7f060013;
         public static final int button_scan=0x7f060006;
-        public static final int button_send=0x7f060009;
-        public static final int discoverable=0x7f06000b;
-        public static final int edit_text_out=0x7f060008;
-        public static final int in=0x7f060007;
+        public static final int checkBoxPin0=0x7f060007;
+        public static final int checkBoxPin1=0x7f060008;
+        public static final int checkBoxPin2=0x7f060009;
+        public static final int checkBoxPin3=0x7f06000a;
+        public static final int checkBoxPin4=0x7f06000b;
+        public static final int checkBoxPin5=0x7f06000c;
+        public static final int discoverable=0x7f060017;
+        public static final int editTextFreq=0x7f06000d;
+        public static final int editTextSamples=0x7f060012;
         public static final int new_devices=0x7f060005;
         public static final int paired_devices=0x7f060003;
-        public static final int secure_connect_scan=0x7f06000a;
+        public static final int secure_connect_scan=0x7f060016;
+        public static final int textView3=0x7f060014;
+        public static final int textViewCont=0x7f06000e;
+        public static final int textViewFin=0x7f060011;
+        public static final int textViewLastRead=0x7f060015;
         public static final int title_left_text=0x7f060000;
         public static final int title_new_devices=0x7f060004;
         public static final int title_paired_devices=0x7f060002;
@@ -41,11 +53,34 @@ public final class R {
         public static final int app_name=0x7f040000;
         public static final int bt_not_enabled_leaving=0x7f040003;
         public static final int button_scan=0x7f04000d;
+        /**   Buttons 
+         */
+        public static final int continuous_start=0x7f040019;
+        public static final int continuous_stop=0x7f04001a;
+        /**   Texts 
+         */
+        public static final int continuous_tab=0x7f04001c;
         public static final int discoverable=0x7f040010;
+        public static final int finite_start=0x7f04001b;
+        public static final int finite_tab=0x7f04001d;
+        /**   Inputs 
+         */
+        public static final int frequency_input=0x7f040017;
         public static final int insecure_connect=0x7f04000f;
+        public static final int last_read_tab=0x7f04001e;
         public static final int none_found=0x7f04000a;
         public static final int none_paired=0x7f040009;
         public static final int not_connected=0x7f040002;
+        /**   Main Layout 
+ Pin check boxes 
+         */
+        public static final int pin0=0x7f040011;
+        public static final int pin1=0x7f040012;
+        public static final int pin2=0x7f040013;
+        public static final int pin3=0x7f040014;
+        public static final int pin4=0x7f040015;
+        public static final int pin5=0x7f040016;
+        public static final int samples_input=0x7f040018;
         /**   DeviceListActivity 
          */
         public static final int scanning=0x7f040007;

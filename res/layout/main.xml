@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Copyright (C) 2009 The Android Open Source Project
+<!--
+     Copyright (C) 2009 The Android Open Source Project
 
      Licensed under the Apache License, Version 2.0 (the "License");
      you may not use this file except in compliance with the License.
@@ -13,34 +14,147 @@
      See the License for the specific language governing permissions and
      limitations under the License.
 -->
-
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:orientation="vertical"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    >
-    <ListView android:id="@+id/in"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:stackFromBottom="true"
-        android:transcriptMode="alwaysScroll"
-        android:layout_weight="1"
-    />
+    android:orientation="vertical" >
+
     <LinearLayout
-        android:orientation="horizontal"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content" >
+
+        <CheckBox
+            android:id="@+id/checkBoxPin0"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/pin0" />
+
+        <CheckBox
+            android:id="@+id/checkBoxPin1"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/pin1" />
+
+        <CheckBox
+            android:id="@+id/checkBoxPin2"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/pin2" />
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content" >
+
+        <CheckBox
+            android:id="@+id/checkBoxPin3"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/pin3" />
+
+        <CheckBox
+            android:id="@+id/checkBoxPin4"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/pin4" />
+
+        <CheckBox
+            android:id="@+id/checkBoxPin5"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/pin5" />
+    </LinearLayout>
+
+    <EditText
+        android:id="@+id/editTextFreq"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        >
-        <EditText android:id="@+id/edit_text_out"
+        android:ems="10"
+        android:hint="@string/frequency_input"
+        android:inputType="number" >
+
+        <requestFocus />
+    </EditText>
+
+    <Space
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content" />
+
+    <Space
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content" />
+
+    <TextView
+        android:id="@+id/textViewCont"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/continuous_tab"
+        android:textAppearance="?android:attr/textAppearanceLarge" />
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        style="?android:attr/buttonBarStyle"
+        android:layout_height="wrap_content" >
+
+        <Button
+            android:id="@+id/buttonConStart"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:layout_gravity="bottom"
-        />
-        <Button android:id="@+id/button_send"
+            style="?android:attr/buttonBarButtonStyle"
+            android:text="@string/continuous_start" />
+
+        <Button
+            android:id="@+id/buttonConStop"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="@string/send"
-        />
+            android:layout_weight="1"
+            style="?android:attr/buttonBarButtonStyle"
+            android:text="@string/continuous_stop" />
+
     </LinearLayout>
+
+    <TextView
+        android:id="@+id/textViewFin"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/finite_tab"
+        android:textAppearance="?android:attr/textAppearanceLarge" />
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content" >
+
+        <EditText
+            android:id="@+id/editTextSamples"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:ems="10"
+            android:hint="@string/samples_input"
+            android:inputType="number" />
+
+        <Button
+            android:id="@+id/buttonFinStart"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            style="?android:attr/buttonBarButtonStyle"
+            android:text="@string/finite_start" />
+
+    </LinearLayout>
+
+    <TextView
+        android:id="@+id/textView3"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/last_read_tab"
+        android:textAppearance="?android:attr/textAppearanceLarge" />
+
+    <TextView
+        android:id="@+id/textViewLastRead"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textAppearance="?android:attr/textAppearanceMedium" />
+
 </LinearLayout>
