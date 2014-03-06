@@ -35,6 +35,7 @@ import android.view.Window;
 import android.view.inputmethod.EditorInfo;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
+import android.widget.CheckBox;
 import android.widget.EditText;
 import android.widget.ListView;
 import android.widget.TextView;
@@ -65,9 +66,12 @@ public class BluetoothLIFA extends Activity {
     private static final int REQUEST_ENABLE_BT = 3;
 
     // Layout Views
-    private ListView mConversationView;
-    private EditText mOutEditText;
-    private Button mSendButton;
+    static final int pinAmount = 6;//Must match layout
+    private CheckBox[] mPinsCheckBox = new CheckBox[pinAmount];
+    //private CheckBox mPin0CheckBox, mPin1CheckBox, mPin2CheckBox, mPin3CheckBox, mPin4CheckBox, mPin5CheckBox;
+    private EditText mFrequencyEditText, mSamplesEditText;
+    private Button mContinuousStartButton,mContinuousStopButton,mFiniteStartButton;
+    private TextView mLastReadingTextView;
 
     // Name of the connected device
     private String mConnectedDeviceName = null;
@@ -137,25 +141,56 @@ public class BluetoothLIFA extends Activity {
     private void setupChat() {
         Log.d(TAG, "setupChat()");
 
-        // Initialize the array adapter for the conversation thread
-        mConversationArrayAdapter = new ArrayAdapter<String>(this, R.layout.message);
-        mConversationView = (ListView) findViewById(R.id.in);
-        mConversationView.setAdapter(mConversationArrayAdapter);
+        // Initialize the Check boxes
+        for(int i=0; i<pinAmount; i++) {
+        	   
+        	    String chkBoxID = "checkBoxPin" + i ;
+        	    int resID = getResources().getIdentifier(chkBoxID, "id", getPackageName());
+        	    mPinsCheckBox[i] = ((CheckBox) findViewById(resID));
+        	    
+        	   
+        	}
 
-        // Initialize the compose field with a listener for the return key
-        mOutEditText = (EditText) findViewById(R.id.edit_text_out);
-        mOutEditText.setOnEditorActionListener(mWriteListener);
+        // Initialize the text inputs
+        mFrequencyEditText = (EditText) findViewById(R.id.editTextFreq);
+        mSamplesEditText = (EditText) findViewById(R.id.editTextSamples);
+        
+        // Initialize the text output
+        mLastReadingTextView=(TextView) findViewById(R.id.textViewLastRead);
 
-        // Initialize the send button with a listener that for click events
-        mSendButton = (Button) findViewById(R.id.button_send);
-        mSendButton.setOnClickListener(new OnClickListener() {
+        // Initialize the buttons with a listener that for click events
+        
+        mContinuousStartButton = (Button) findViewById(R.id.buttonConStart);
+        mContinuousStartButton.setOnClickListener(new OnClickListener() {
+            public void onClick(View v) {
+                // TODO Set the command
+            	Toast.makeText(BluetoothLIFA.this, "Continuous Start clicked.", Toast.LENGTH_SHORT).show();   
+            }
+        });
+        mContinuousStopButton = (Button) findViewById(R.id.buttonConStop);
+        mContinuousStopButton.setOnClickListener(new OnClickListener() {
+            public void onClick(View v) {
+                // TODO Set the command
+            	Toast.makeText(BluetoothLIFA.this, "Continuous Stop clicked.", Toast.LENGTH_SHORT).show();   
+            }
+        });
+        mFiniteStartButton = (Button) findViewById(R.id.buttonFinStart);
+        mFiniteStartButton.setOnClickListener(new OnClickListener() {
+            public void onClick(View v) {
+                // TODO Set the command
+            	Toast.makeText(BluetoothLIFA.this, "Finite Start clicked.", Toast.LENGTH_SHORT).show();   
+            }
+        });
+        		
+        
+        /*mSendButton.setOnClickListener(new OnClickListener() {
             public void onClick(View v) {
                 // Send a message using content of the edit text widget
                 TextView view = (TextView) findViewById(R.id.edit_text_out);
                 String message = view.getText().toString();
                 sendMessage(message);
             }
-        });
+        });*/
 
         // Initialize the BluetoothChatService to perform bluetooth connections
         mChatService = new BluetoothLIFAService(this, mHandler);
@@ -213,7 +248,7 @@ public class BluetoothLIFA extends Activity {
 
             // Reset out string buffer to zero and clear the edit text field
             mOutStringBuffer.setLength(0);
-            mOutEditText.setText(mOutStringBuffer);
+            mFrequencyEditText.setText(mOutStringBuffer);
         }
     }
 
