@@ -66,9 +66,8 @@ public class BluetoothLIFA extends Activity {
     private static final int REQUEST_ENABLE_BT = 3;
 
     // Layout Views
-    static final int pinAmount = 6;//Must match layout
-    private CheckBox[] mPinsCheckBox = new CheckBox[pinAmount];
-    //private CheckBox mPin0CheckBox, mPin1CheckBox, mPin2CheckBox, mPin3CheckBox, mPin4CheckBox, mPin5CheckBox;
+    static final int PIN_AMOUNT = 6;//Must match layout
+    private CheckBox[] mPinsCheckBox = new CheckBox[PIN_AMOUNT];
     private EditText mFrequencyEditText, mSamplesEditText;
     private Button mContinuousStartButton,mContinuousStopButton,mFiniteStartButton;
     private TextView mLastReadingTextView;
@@ -83,8 +82,14 @@ public class BluetoothLIFA extends Activity {
     private BluetoothAdapter mBluetoothAdapter = null;
     // Member object for the chat services
     private BluetoothLIFAService mChatService = null;
-
-
+    
+    //LIFA specific values
+    static final int COMMAND_LENGTH = 15;
+    //Commands
+    static final byte CONTINUOS_AQUISTION_MODE_ON = 0x36;
+    static final byte FINITE_AQUISTION_MODE_ON = 0x35;
+    static final byte CONTINUOS_AQUISTION_MODE_OFF = 0x2b;
+    	
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -142,7 +147,7 @@ public class BluetoothLIFA extends Activity {
         Log.d(TAG, "setupChat()");
 
         // Initialize the Check boxes
-        for(int i=0; i<pinAmount; i++) {
+        for(int i=0; i<PIN_AMOUNT; i++) {
         	   
         	    String chkBoxID = "checkBoxPin" + i ;
         	    int resID = getResources().getIdentifier(chkBoxID, "id", getPackageName());
@@ -161,24 +166,51 @@ public class BluetoothLIFA extends Activity {
         // Initialize the buttons with a listener that for click events
         
         mContinuousStartButton = (Button) findViewById(R.id.buttonConStart);
+        mContinuousStartButton.setEnabled(true);
         mContinuousStartButton.setOnClickListener(new OnClickListener() {
             public void onClick(View v) {
-                // TODO Set the command
-            	Toast.makeText(BluetoothLIFA.this, "Continuous Start clicked.", Toast.LENGTH_SHORT).show();   
+                
+            	Toast.makeText(BluetoothLIFA.this, "Continuous Start clicked.", Toast.LENGTH_SHORT).show(); 
+            	//Disable the start buttons and enable the stop button
+            	mContinuousStartButton.setEnabled(false);
+            	mFiniteStartButton.setEnabled(false);
+            	mContinuousStopButton.setEnabled(true);
+            	byte[] command = generateCommand(CONTINUOS_AQUISTION_MODE_ON);
+            	sendCommand(command);
+            	// TODO Add the part that reads the values
             }
+
+			
+            
         });
+        
         mContinuousStopButton = (Button) findViewById(R.id.buttonConStop);
+        	mContinuousStopButton.setEnabled(false);
         mContinuousStopButton.setOnClickListener(new OnClickListener() {
             public void onClick(View v) {
-                // TODO Set the command
-            	Toast.makeText(BluetoothLIFA.this, "Continuous Stop clicked.", Toast.LENGTH_SHORT).show();   
+            	//Disable the stop button and enable the start buttons
+            	mContinuousStartButton.setEnabled(true);
+            	mFiniteStartButton.setEnabled(true);
+            	mContinuousStopButton.setEnabled(false);
+            	Toast.makeText(BluetoothLIFA.this, "Continuous Stop clicked.", Toast.LENGTH_SHORT).show();
+            	byte[] command = generateCommand(CONTINUOS_AQUISTION_MODE_OFF);
+            	sendCommand(command);
+            	// TODO Stop the part that reads the command
             }
         });
         mFiniteStartButton = (Button) findViewById(R.id.buttonFinStart);
+        mFiniteStartButton.setEnabled(true);
         mFiniteStartButton.setOnClickListener(new OnClickListener() {
-            public void onClick(View v) {
-                // TODO Set the command
-            	Toast.makeText(BluetoothLIFA.this, "Finite Start clicked.", Toast.LENGTH_SHORT).show();   
+            public void onClick(View v) {                
+            	Toast.makeText(BluetoothLIFA.this, "Finite Start clicked.", Toast.LENGTH_SHORT).show();
+            	//Disable all buttons
+            	//TODO make sure they are enabled once the running is done
+            	mContinuousStartButton.setEnabled(false);
+            	mFiniteStartButton.setEnabled(false);
+            	mContinuousStopButton.setEnabled(false);
+            	byte[] command = generateCommand(FINITE_AQUISTION_MODE_ON);
+            	sendCommand(command);
+            	// TODO Add the part that reads the values
             }
         });
         		
@@ -198,6 +230,81 @@ public class BluetoothLIFA extends Activity {
         // Initialize the buffer for outgoing messages
         mOutStringBuffer = new StringBuffer("");
     }
+    
+    private byte[] generateCommand(byte commandType) {
+		byte[] command =new byte[COMMAND_LENGTH];//Initalized to zero by default
+    	command[0]=(byte) 0xff;//The verification byte
+    	command[1]=commandType;//Command Type
+    	
+    	if(commandType==CONTINUOS_AQUISTION_MODE_ON || commandType==FINITE_AQUISTION_MODE_ON){
+    		//Get the active pins from the check box
+        	ActivePins activePins =new ActivePins();
+        	activePins.getPinData();
+        	command[2] = (byte) activePins.onPinAmount;
+        	command[7] = activePins.pinBits;
+        	//Get the frequency
+        	int frequency=0;
+        	try {
+        		frequency = Integer.parseInt(mFrequencyEditText.getText().toString());
+        	} catch(NumberFormatException nfe) {//Input should be a number, this is a just an extra measure
+        		Log.e(TAG, "Frequency was not a number");
+        	} 
+        	if (frequency>1000){
+        		Toast.makeText(BluetoothLIFA.this, "Ardunio sampling at over 1KHz may not work", Toast.LENGTH_LONG).show(); 
+        	}
+        	
+        	command[3] = (byte) (frequency & 0xff);//Least significant byte
+        	command[4] = (byte) ((frequency>>8) & 0xff);//Most significant byte
+    		
+    	}
+    	
+    	if(commandType==FINITE_AQUISTION_MODE_ON){
+    		int samples=0;
+        	try {
+        		samples = Integer.parseInt(mSamplesEditText.getText().toString());
+        	} catch(NumberFormatException nfe) {//Input should be a number, this is a just an extra measure
+        		Log.e(TAG, "Samples was not a number");
+        	} 
+        	
+        	
+        	command[5] = (byte) (samples & 0xff);//Least significant byte
+        	command[6] = (byte) ((samples>>8) & 0xff);//Most significant byte
+    	}
+    	//Create checksum
+    	int checksum = 0;//Since unsigned char is not a value in java
+    	for (int i=0; i<(COMMAND_LENGTH-1); i++)
+    	  {
+    	    checksum += command[i]; 
+    	  }
+    	command[14]=(byte) checksum;
+		return command;
+	}
+    public class ActivePins {
+    	int onPinAmount;
+        byte pinBits;
+    	public ActivePins() {
+	        onPinAmount=0;
+	        pinBits=0;
+    	}
+        
+        public void getPinData() {   
+        	onPinAmount=0;
+        	pinBits=0;
+        	for(int i=0; i<PIN_AMOUNT; i++) {//If more than 8 pins are used (say arduino mega) this needs to be modified
+        		if (mPinsCheckBox[i].isChecked()) {
+        			pinBits=(byte) (pinBits | (0x80 >>> i));//Unsigned bit shift to the bins location
+        			onPinAmount=onPinAmount+1;
+                }
+        	    
+        	    
+         	   
+        	}
+    		
+        }
+        
+    }
+
+    
 
     @Override
     public synchronized void onPause() {
@@ -251,6 +358,26 @@ public class BluetoothLIFA extends Activity {
             mFrequencyEditText.setText(mOutStringBuffer);
         }
     }
+    
+    /**
+     * Sends a command.
+     * @param message  A byte array that is the command to send.
+     */
+    private void sendCommand(byte[] command) {
+        // Check that we're actually connected before trying anything
+        if (mChatService.getState() != BluetoothLIFAService.STATE_CONNECTED) {
+            Toast.makeText(this, R.string.not_connected, Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        
+            mChatService.write(command);
+
+            // Reset out string buffer to zero
+            mOutStringBuffer.setLength(0);
+            
+        
+    }
 
     // The action listener for the EditText widget, to listen for the return key
     private TextView.OnEditorActionListener mWriteListener =
@@ -286,7 +413,8 @@ public class BluetoothLIFA extends Activity {
                 switch (msg.arg1) {
                 case BluetoothLIFAService.STATE_CONNECTED:
                     setStatus(getString(R.string.title_connected_to, mConnectedDeviceName));
-                    mConversationArrayAdapter.clear();
+                    //mConversationArrayAdapter.clear();
+                    //TODO delete the conversation adapter
                     break;
                 case BluetoothLIFAService.STATE_CONNECTING:
                     setStatus(R.string.title_connecting);
@@ -301,13 +429,13 @@ public class BluetoothLIFA extends Activity {
                 byte[] writeBuf = (byte[]) msg.obj;
                 // construct a string from the buffer
                 String writeMessage = new String(writeBuf);
-                mConversationArrayAdapter.add("Me:  " + writeMessage);
+                //mConversationArrayAdapter.add("Me:  " + writeMessage);
                 break;
             case MESSAGE_READ:
                 byte[] readBuf = (byte[]) msg.obj;
                 // construct a string from the valid bytes in the buffer
                 String readMessage = new String(readBuf, 0, msg.arg1);
-                mConversationArrayAdapter.add(mConnectedDeviceName+":  " + readMessage);
+                //mConversationArrayAdapter.add(mConnectedDeviceName+":  " + readMessage);
                 break;
             case MESSAGE_DEVICE_NAME:
                 // save the connected device's name
