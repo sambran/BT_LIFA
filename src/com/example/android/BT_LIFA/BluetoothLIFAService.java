@@ -229,6 +229,115 @@ public class BluetoothLIFAService {
         // Perform the write unsynchronized
         r.write(out);
     }
+    /**
+     * Read two bytes (a single reading) from 
+     * ConnectedThread in an unsynchronized manner
+     * @param amount the amount of bytes to read
+     * @see ConnectedThread#getReading()
+     */
+    /*public void readContinuous(int amount) {
+        // Create temporary object
+        ConnectedThread r;
+        // Synchronize a copy of the ConnectedThread
+        
+        synchronized (this) {
+            if (mState != STATE_CONNECTED) return;
+            r = mConnectedThread;
+        }
+        // Perform the read unsynchronized
+        r.getReading(amount);
+    }*/
+    public void readContinuous() {
+        // Create temporary object
+        ConnectedThread r;
+        // Synchronize a copy of the ConnectedThread
+        Log.i(TAG, "Reading Continously");
+        synchronized (this) {
+            if (mState != STATE_CONNECTED) return;
+            r = mConnectedThread;
+        }
+        // Perform the read unsynchronized
+        r.getFirstReading(1);
+        try {
+			r.join();
+		} catch (InterruptedException e) {
+			Log.e(TAG, "Could not wait for threrd", e);
+		}
+        while(BluetoothLIFA.getStatus()==BluetoothLIFA.CONTINUOS_AQUISTION_MODE_ON){//While continuous acquisition
+        	synchronized (this) {
+                if (mState != STATE_CONNECTED) return;
+                r = mConnectedThread;
+            }
+            // Perform the read unsynchronized
+            r.getReading(2);
+            try {
+				r.join();
+			} catch (InterruptedException e) {
+				Log.e(TAG, "Could not wait for threrd", e);
+			}
+        } 
+    }
+    public void readFinite(int samples, int pinAmount) {
+        // Create temporary object
+    	Log.i(TAG, "Reading " + samples +" from " +  pinAmount);
+        ConnectedThread r;
+        // Synchronize a copy of the ConnectedThread
+        
+        synchronized (this) {
+            if (mState != STATE_CONNECTED) return;
+            r = mConnectedThread;
+        }
+        // Perform the read unsynchronized
+        r.getFirstReading(1);
+        try {
+			r.join();
+		} catch (InterruptedException e) {
+			// TODO Auto-generated catch block
+			Log.e(TAG, "Could not wait for threrd", e);
+		}
+        for(int i = 0;i<samples;i++){
+	        for(int j=0;j<pinAmount;j++){//read every pin
+	        	synchronized (this) {
+	                if (mState != STATE_CONNECTED) return;
+	                r = mConnectedThread;
+	                
+	            }
+	            // Perform the read unsynchronized
+	        	Log.i(TAG, "Readin number " + i + " on pin " + j);
+	            r.getReading(2);
+	            try {
+					r.join();
+				} catch (InterruptedException e) {
+					// TODO Auto-generated catch block
+					Log.e(TAG, "Could not wait for threrd", e);
+				}
+	        	
+	            
+	        } 
+        }
+    }
+    
+    /**
+     * Read two bytes (a single reading) from 
+     * ConnectedThread in an unsynchronized manner
+     * @param amount the amount of bytes to read
+     * @see ConnectedThread#getReading()
+     */
+    public void stopContinuous() {
+    	Log.i(TAG, "Stopping");
+        // Create temporary object
+        ConnectedThread r;
+        // Synchronize a copy of the ConnectedThread
+        
+        synchronized (this) {
+            if (mState != STATE_CONNECTED) return;
+            r = mConnectedThread;
+        }
+        // read all values from the buffer
+        r.flushBuffer();
+        
+        
+    }
 
     /**
      * Indicate that the connection attempt failed and notify the UI Activity.
@@ -447,10 +556,10 @@ public class BluetoothLIFAService {
 
         public void run() {
             Log.i(TAG, "BEGIN mConnectedThread");
-            byte[] buffer = new byte[1024];
+            /*byte[] buffer = new byte[1024];
             int bytes;
             
-
+            
             // Keep listening to the InputStream while connected
             while (true) {
                 try {
@@ -468,6 +577,7 @@ public class BluetoothLIFAService {
                     break;
                 }
             }
+            */
         }
 
         /**
@@ -485,6 +595,118 @@ public class BluetoothLIFAService {
                 Log.e(TAG, "Exception during write", e);
             }
         }
+        public void getReading(int amount) {
+        	byte[] buffer = new byte[amount];
+            int bytes;
+            int pinNumber;
+        		
+        		
+        		try {
+        			Log.i(TAG, "reading buffer");
+        			bytes = mmInStream.read(buffer,0,amount);
+        			Log.i(TAG, "got " + bytes);
+        			while(bytes==-1){
+            			try{
+            				bytes = mmInStream.read(buffer,bytes,amount)+bytes;
+                			Log.i(TAG, "got " + bytes);
+            			}catch (IOException e) {
+            				Log.e(TAG, "disconnected", e);
+                            connectionLost();
+                            // Start the service over to restart listening mode
+                            BluetoothLIFAService.this.start();
+                        }
+        			}
+        			while(bytes<amount){
+            			try{
+            				int newAmount = amount-bytes;
+            				bytes = mmInStream.read(buffer,bytes,newAmount)+bytes;
+                			Log.i(TAG, "got " + bytes);
+            			}catch (IOException e) {
+            				Log.e(TAG, "disconnected", e);
+                            connectionLost();
+                            // Start the service over to restart listening mode
+                            BluetoothLIFAService.this.start();
+                        }
+            			
+            		}
+        			pinNumber = ((buffer[0] >> 2) & 0x000000ff) ;
+
+                    // Send the obtained bytes to the UI Activity
+        			Log.i(TAG, "Sending reading from pin " + pinNumber);
+                    mHandler.obtainMessage(BluetoothLIFA.MESSAGE_READ, bytes, -1, buffer)
+                            .sendToTarget();
+                } catch (IOException e) {
+                	Log.e(TAG, "disconnected", e);
+                    connectionLost();
+                    // Start the service over to restart listening mode
+                    BluetoothLIFAService.this.start();
+                    
+                }
+    		
+    	
+    	
+        	
+        }
+        public void getFirstReading(int amount) {
+        	byte[] buffer = new byte[amount];
+            int bytes;
+            
+            		try {
+            			Log.i(TAG, "Reading first");
+            			bytes = mmInStream.read(buffer,0,amount);
+            			Log.i(TAG, "got " + bytes);
+
+                        
+                    } catch (IOException e) {
+                    	Log.e(TAG, "disconnected", e);
+                        connectionLost();
+                        // Start the service over to restart listening mode
+                        BluetoothLIFAService.this.start();
+                        
+                    }
+        		
+        	
+        	
+        	
+        }
+        public void flushBuffer() {
+        	byte[] buffer = new byte[4096];
+            int bytes;
+            for(int i =0; i<5; i++){
+	            try{
+	        		int inputAmnt=mmInStream.available();
+	        		if(inputAmnt!=0){
+		                    try {
+		                    	Log.i(TAG, "reading buffer for flush");
+		                    	bytes=mmInStream.read(buffer);
+		                    	Log.i(TAG, "got " + bytes);
+		                    	
+		                        
+		
+		                    } catch (IOException e) {
+		                    	Log.i(TAG, "disconnected", e);
+		                        connectionLost();
+		                        // Start the service over to restart listening mode
+		                        BluetoothLIFAService.this.start();
+		                        
+		                    }
+		                    
+		            }
+	            }catch (IOException e) {
+	                Log.e(TAG, "Exception while gettig a reading", e);
+	                
+	            }
+	            try {
+    				Thread.sleep(1000);
+    			} catch (InterruptedException e) {
+    				
+    				Log.e(TAG, "Error while delay", e);
+    			}
+	            Log.i(TAG, "reading buffer loop " + i +" done");
+            }
+        	
+        }
+        
 
         public void cancel() {
             try {
