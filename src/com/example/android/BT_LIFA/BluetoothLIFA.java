@@ -18,6 +18,15 @@ package com.example.android.BT_LIFA;
 
 
 
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
+import java.util.Calendar;
+import java.util.Date;
+
 import android.app.ActionBar;
 import android.app.Activity;
 import android.bluetooth.BluetoothAdapter;
@@ -25,6 +34,7 @@ import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothSocket;
 import android.content.Intent;
 import android.os.Bundle;
+import android.os.Environment;
 import android.os.Handler;
 import android.os.Message;
 import android.util.Log;
@@ -58,6 +68,7 @@ public class BluetoothLIFA extends Activity {
     public static final int MESSAGE_WRITE = 3;
     public static final int MESSAGE_DEVICE_NAME = 4;
     public static final int MESSAGE_TOAST = 5;
+    public static final int MESSAGE_DONE = 6;
 
     // Key names received from the BluetoothChatService Handler
     public static final String DEVICE_NAME = "device_name";
@@ -100,6 +111,11 @@ public class BluetoothLIFA extends Activity {
     
     //Program Status
     private static byte mStatus = CONTINUOS_AQUISTION_MODE_OFF;
+    
+    //Folder where the log will be stored
+    File mRootLog = null;
+    //Buffered writer for saving data
+    BufferedWriter mBufferedWriter = null;
     
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -190,6 +206,8 @@ public class BluetoothLIFA extends Activity {
 	            	mContinuousStartButton.setEnabled(false);
 	            	mFiniteStartButton.setEnabled(false);
 	            	mContinuousStopButton.setEnabled(true);
+	            	mActivePins.getPinData();
+	            	initiateDataFle(CONTINUOS_AQUISTION_MODE_ON);
 	            	byte[] command = generateCommand(CONTINUOS_AQUISTION_MODE_ON);
 	            	mStatus=CONTINUOS_AQUISTION_MODE_ON;
 	            	sendCommand(command);
@@ -209,14 +227,19 @@ public class BluetoothLIFA extends Activity {
             public void onClick(View v) {
             	Thread t = new flushInputThread();
             	//Disable the stop button and enable the start buttons
-            	mContinuousStartButton.setEnabled(true);
-            	mFiniteStartButton.setEnabled(true);
-            	mContinuousStopButton.setEnabled(false);
-            	Toast.makeText(BluetoothLIFA.this, "Continuous Stop clicked.", Toast.LENGTH_SHORT).show();
-            	byte[] command = generateCommand(CONTINUOS_AQUISTION_MODE_OFF);
-            	mStatus=CONTINUOS_AQUISTION_MODE_OFF;
-            	sendCommand(command);
-            	t.start();
+            	if (mChatService.getState() != BluetoothLIFAService.STATE_CONNECTED) {
+                    Toast.makeText(BluetoothLIFA.this, R.string.not_connected, Toast.LENGTH_SHORT).show();
+                }else{
+	            	mContinuousStartButton.setEnabled(true);
+	            	mFiniteStartButton.setEnabled(true);
+	            	mContinuousStopButton.setEnabled(false);
+	            	Toast.makeText(BluetoothLIFA.this, "Continuous Stop clicked.", Toast.LENGTH_SHORT).show();
+	            	mActivePins.getPinData();
+	            	byte[] command = generateCommand(CONTINUOS_AQUISTION_MODE_OFF);
+	            	mStatus=CONTINUOS_AQUISTION_MODE_OFF;
+	            	sendCommand(command);
+	            	t.start();
+	                }
             	//mChatService.stopContinuous();
             	// TODO Stop the part that reads the command
             	//flushInput();
@@ -237,6 +260,8 @@ public class BluetoothLIFA extends Activity {
 	            		Log.e(TAG, "Samples was not a number");
 	            	} 
                 	
+                	
+                    
                 	Thread t = new aquireFinThread(samples);
 	            	//Disable all buttons
 	            	//TODO make sure they are enabled once the running is done
@@ -244,11 +269,18 @@ public class BluetoothLIFA extends Activity {
 	            	mFiniteStartButton.setEnabled(false);
 	            	mContinuousStopButton.setEnabled(false);
 	            	
+	            	mActivePins.getPinData();
+	            	initiateDataFle(FINITE_AQUISTION_MODE_ON);
 	            	byte[] command = generateCommand(FINITE_AQUISTION_MODE_ON);
 	            	mStatus=FINITE_AQUISTION_MODE_ON;
 	            	sendCommand(command);
 	            	// TODO Add the part that reads the values
 	            	t.start();
+	            	
+	            	
+	            	
+	            	
+	            	
                 }
             	
             }
@@ -271,19 +303,79 @@ public class BluetoothLIFA extends Activity {
         mOutStringBuffer = new StringBuffer("");
     }
     
+    private void initiateDataFle(byte acquisitionType) {
+		//Create root folder for log file
+		mRootLog = new File(Environment.getExternalStorageDirectory(), "BT_LIFA");
+		int frequency=0;
+		int samples=0;
+		if (!mRootLog.exists()) {
+		    mRootLog.mkdirs();
+
+		}
+		SimpleDateFormat formatter = new SimpleDateFormat("yyyy_MM_dd_HH_mm_ss");
+		String fileName = formatter.format(new Date());
+		File dataFile = new File(mRootLog, fileName+".txt");
+		
+		
+		
+		try {
+			mBufferedWriter = new BufferedWriter(new FileWriter(dataFile,true), 32768);
+			try {
+	    		frequency = Integer.parseInt(mFrequencyEditText.getText().toString());
+	    		
+	    	} catch(NumberFormatException nfe) {//Input should be a number, this is a just an extra measure
+	    		Log.e(TAG, "Frequency was not a number");
+	    	} 
+			if(acquisitionType==FINITE_AQUISTION_MODE_ON){
+				try {
+	        		samples = Integer.parseInt(mSamplesEditText.getText().toString());
+	        	} catch(NumberFormatException nfe) {//Input should be a number, this is a just an extra measure
+	        		Log.e(TAG, "Samples was not a number");
+	        	} 
+				
+				try {
+					mBufferedWriter.newLine();
+					mBufferedWriter.write("Finite aquistion: getting " + samples + " samples from " + mActivePins.onPinAmount + " pins at " + frequency + "Hz\nPins,A");
+					
+				} catch (IOException e) {
+					// TODO Auto-generated catch block
+					Log.e(TAG, "Can't write to buffered writer");
+				}
+			}
+			else if(acquisitionType==CONTINUOS_AQUISTION_MODE_ON){
+								
+				try {
+					mBufferedWriter.newLine();
+					mBufferedWriter.write("Continuous aquistion: getting samples from " + mActivePins.onPinAmount + " pins at " + frequency + "Hz");
+					
+				} catch (IOException e) {
+					// TODO Auto-generated catch block
+					Log.e(TAG, "Can't write to buffered writer");
+				}
+			}
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			Log.e(TAG, "Can't create buffered writer");
+		}
+		
+		
+		
+	}
+    
     private byte[] generateCommand(byte commandType) {
 		byte[] command =new byte[COMMAND_LENGTH];//Initialized to zero by default
+		int frequency=0;
     	command[0]=(byte) 0xff;//The verification byte
     	command[1]=commandType;//Command Type
     	
     	if(commandType==CONTINUOS_AQUISTION_MODE_ON || commandType==FINITE_AQUISTION_MODE_ON){
     		//Get the active pins from the check box
         	
-        	mActivePins.getPinData();
+        	
         	command[2] = (byte) mActivePins.onPinAmount;
         	command[7] = mActivePins.pinBits;
         	//Get the frequency
-        	int frequency=0;
+        	
         	try {
         		frequency = Integer.parseInt(mFrequencyEditText.getText().toString());
         		
@@ -413,6 +505,7 @@ public class BluetoothLIFA extends Activity {
             		mContinuousStopButton.setEnabled(false);
             	}
             });
+            
             mStatus=CONTINUOS_AQUISTION_MODE_OFF;
             
         }
@@ -557,11 +650,20 @@ public class BluetoothLIFA extends Activity {
 	            	byte[] readBuf = (byte[]) msg.obj;
 	            	int pinNumber = ((readBuf[0] >> 2) & 0x000000ff) ;
 	                int scaledValue = ((readBuf[0] << 8) & 0x00000300) | (readBuf[1] & 0x000000ff);
-	                int pinNumber2 = ((readBuf[1] >> 2) & 0x000000ff) ;
-	                int scaledValue2 = ((readBuf[1] << 8) & 0x00000300) | (readBuf[0] & 0x000000ff);
+	                //int pinNumber2 = ((readBuf[1] >> 2) & 0x000000ff) ;
+	                //int scaledValue2 = ((readBuf[1] << 8) & 0x00000300) | (readBuf[0] & 0x000000ff);
 	                double value =0.0048828125*scaledValue;
-	                double value2 =0.0048828125*scaledValue2;
-	                mLastReadingTextView.setText("Pin number " + pinNumber + " value is " + value + " or \n" + "Pin number " + pinNumber2 + " value is " + value2);
+	                //double value2 =0.0048828125*scaledValue2;
+	                mLastReadingTextView.setText("Pin number " + pinNumber + " value is " + value);// + " or \n" + "Pin number " + pinNumber2 + " value is " + value2);
+	                try {
+	                	mBufferedWriter.newLine();
+						mBufferedWriter.write(Integer.toString(pinNumber) + "," + value );
+						
+					} catch (IOException e) {
+						// TODO Auto-generated catch block
+						Log.e(TAG, "Can't write to buffered writer");
+						e.printStackTrace();
+					}
             	}
                 break;
             case MESSAGE_DEVICE_NAME:
@@ -574,6 +676,16 @@ public class BluetoothLIFA extends Activity {
                 Toast.makeText(getApplicationContext(), msg.getData().getString(TOAST),
                                Toast.LENGTH_SHORT).show();
                 break;
+            case MESSAGE_DONE:
+            	try {
+            		Log.i(TAG,"Closing Buffer");
+    				mBufferedWriter.close();
+    				
+    			} catch (IOException e) {
+    				// TODO Auto-generated catch block
+    				e.printStackTrace();
+    			}
+            	break;
             }
         }
     };
@@ -647,6 +759,8 @@ public class BluetoothLIFA extends Activity {
         }
         return false;
     }
+
+	
 
 }
 

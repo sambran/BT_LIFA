@@ -63,12 +63,17 @@ public class BluetoothLIFAService {
     private ConnectThread mConnectThread;
     private ConnectedThread mConnectedThread;
     private int mState;
+    private static int mAcquisitionState;
 
     // Constants that indicate the current connection state
     public static final int STATE_NONE = 0;       // we're doing nothing
     public static final int STATE_LISTEN = 1;     // now listening for incoming connections
     public static final int STATE_CONNECTING = 2; // now initiating an outgoing connection
     public static final int STATE_CONNECTED = 3;  // now connected to a remote device
+    
+    // Constants that indicate the current acquisition state
+    public static final int ACQ_STATE_OFF = 0;       // we're doing nothing
+    public static final int ACQ_STATE_ON = 1;     // now listening for incoming connections
 
     /**
      * Constructor. Prepares a new BluetoothChat session.
@@ -81,6 +86,23 @@ public class BluetoothLIFAService {
         mHandler = handler;
     }
 
+    /**
+     * Set the current state of the chat acquisition
+     * @param state  An integer defining the current acquisition state
+     */
+    synchronized static void setAcquisitionState(int state) {
+        
+    	mAcquisitionState = state;
+
+        // Give the new state to the Handler so the UI Activity can update
+        
+    }
+
+    /**
+     * Return the current acquisition state. */
+    public synchronized static int getAcquisitionState() {
+        return mAcquisitionState;
+    }
     /**
      * Set the current state of the chat connection
      * @param state  An integer defining the current connection state
@@ -276,6 +298,7 @@ public class BluetoothLIFAService {
 				Log.e(TAG, "Could not wait for threrd", e);
 			}
         } 
+        r.endReading();
     }
     public void readFinite(int samples, int pinAmount) {
         // Create temporary object
@@ -315,6 +338,9 @@ public class BluetoothLIFAService {
 	            
 	        } 
         }
+        r.endReading();
+        
+        
     }
     
     /**
@@ -646,6 +672,9 @@ public class BluetoothLIFAService {
     	
     	
         	
+        }
+        public void endReading(){
+        	mHandler.obtainMessage(BluetoothLIFA.MESSAGE_DONE).sendToTarget();
         }
         public void getFirstReading(int amount) {
         	byte[] buffer = new byte[amount];
