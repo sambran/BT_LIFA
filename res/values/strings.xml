@@ -42,15 +42,16 @@
     
     <!--  Main Layout -->
     <!-- Pin check boxes -->
-    <string name="pin0">Pin 0</string>
-    <string name="pin1">Pin 1</string>
-    <string name="pin2">Pin 2</string>
-    <string name="pin3">Pin 3</string>
-    <string name="pin4">Pin 4</string>
-    <string name="pin5">Pin 5</string>
+    
+    <string name="pin0">Channel 0</string>
+    <string name="pin1">Channel 1</string>
+    <string name="pin2">Channel 2</string>
+    <string name="pin3">Channel 3</string>
+    <string name="pin4">Channel 4</string>
+    <string name="pin5">Channel 5</string>
     
     <!--  Inputs -->
-    <string name="frequency_input">Frequency in HZ</string>
+    <string name="frequency_input">Sample rate in HZ</string>
     <string name="samples_input">Amount of samples</string>
     
     <!--  Buttons -->

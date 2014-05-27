@@ -207,7 +207,8 @@ public class BluetoothLIFA extends Activity {
 	            	mFiniteStartButton.setEnabled(false);
 	            	mContinuousStopButton.setEnabled(true);
 	            	mActivePins.getPinData();
-	            	initiateDataFle(CONTINUOS_AQUISTION_MODE_ON);
+	            	//Start a log file
+	            	//initiateDataFle(CONTINUOS_AQUISTION_MODE_ON);
 	            	byte[] command = generateCommand(CONTINUOS_AQUISTION_MODE_ON);
 	            	mStatus=CONTINUOS_AQUISTION_MODE_ON;
 	            	sendCommand(command);
@@ -270,7 +271,8 @@ public class BluetoothLIFA extends Activity {
 	            	mContinuousStopButton.setEnabled(false);
 	            	
 	            	mActivePins.getPinData();
-	            	initiateDataFle(FINITE_AQUISTION_MODE_ON);
+	            	//Start a log file
+	            	//initiateDataFle(FINITE_AQUISTION_MODE_ON);
 	            	byte[] command = generateCommand(FINITE_AQUISTION_MODE_ON);
 	            	mStatus=FINITE_AQUISTION_MODE_ON;
 	            	sendCommand(command);
@@ -303,6 +305,7 @@ public class BluetoothLIFA extends Activity {
         mOutStringBuffer = new StringBuffer("");
     }
     
+    //This function initiates the Log file used to verify the input
     private void initiateDataFle(byte acquisitionType) {
 		//Create root folder for log file
 		mRootLog = new File(Environment.getExternalStorageDirectory(), "BT_LIFA");
@@ -654,7 +657,9 @@ public class BluetoothLIFA extends Activity {
 	                //int scaledValue2 = ((readBuf[1] << 8) & 0x00000300) | (readBuf[0] & 0x000000ff);
 	                double value =0.0048828125*scaledValue;
 	                //double value2 =0.0048828125*scaledValue2;
-	                mLastReadingTextView.setText("Pin number " + pinNumber + " value is " + value);// + " or \n" + "Pin number " + pinNumber2 + " value is " + value2);
+	                mLastReadingTextView.setText("Channel " + pinNumber + " value is " + value);// + " or \n" + "Pin number " + pinNumber2 + " value is " + value2);
+	                /****************
+	                 * Write to log
 	                try {
 	                	mBufferedWriter.newLine();
 						mBufferedWriter.write(Integer.toString(pinNumber) + "," + value );
@@ -664,6 +669,7 @@ public class BluetoothLIFA extends Activity {
 						Log.e(TAG, "Can't write to buffered writer");
 						e.printStackTrace();
 					}
+					*************************/
             	}
                 break;
             case MESSAGE_DEVICE_NAME:
@@ -677,14 +683,18 @@ public class BluetoothLIFA extends Activity {
                                Toast.LENGTH_SHORT).show();
                 break;
             case MESSAGE_DONE:
-            	try {
-            		Log.i(TAG,"Closing Buffer");
-    				mBufferedWriter.close();
-    				
-    			} catch (IOException e) {
-    				// TODO Auto-generated catch block
-    				e.printStackTrace();
-    			}
+            	/*************
+            	 * Close the log
+            	 try {
+	            		Log.i(TAG,"Closing Buffer");
+	    				mBufferedWriter.close();
+	    				
+	    			} catch (IOException e) {
+	    				// TODO Auto-generated catch block
+	    				e.printStackTrace();
+	    			}
+            	 */
+            	
             	break;
             }
         }
